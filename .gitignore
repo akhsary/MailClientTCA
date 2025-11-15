@@ -1,9 +1,26 @@
-Derived
-Ruli.xcworkspace
-Ruli.xcodeproj
+# Xcode
+.DS_Store
+*.xcodeproj/xcuserdata/
+*.xcuserdatad/
+*.xcworkspace/xcuserdata/
 
-**/.DS_Store
-
-Tuist/.build/
-Tuist/.swiftpm/
+# Build products
 build/
+DerivedData/
+*.app
+*.ipa
+*.dSYM.zip
+*.xcarchive/
+
+# Dependencies (e.g., CocoaPods, Carthage, Swift Package Manager)
+Pods/
+Carthage/Build/
+.build/
+Package.resolved
+
+# Other common files
+*.xcuserstate
+*.playground/xcuserdata/
+*.swiftpm/
+fastlane/report/
+fastlane/screenshots/
