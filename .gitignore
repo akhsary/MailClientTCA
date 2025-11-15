@@ -1,0 +1,9 @@
+Derived
+Ruli.xcworkspace
+Ruli.xcodeproj
+
+**/.DS_Store
+
+Tuist/.build/
+Tuist/.swiftpm/
+build/
