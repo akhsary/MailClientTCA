@@ -26,8 +26,9 @@ extension AuthService: DependencyKey {
         let request = await Request<AuthServiceResponceDTO>.post(baseURL: "https://api.xyecoc.com",
                                                            endpoint: "request",
                                                            body: body)
-        
-        return try await NetworkClient.liveValue.send(request)
+        let result = try await NetworkClient.liveValue.send(request)
+        print("DEBUG: \(result)")
+        return result
     }
     
     public static let previewValue = AuthService { username, password in
