@@ -7,15 +7,12 @@
 
 import Foundation
 import Dependencies
+import DependenciesMacros
 
-nonisolated public struct AuthService: Sendable {
+@DependencyClient
+nonisolated
+public struct AuthService: Sendable {
     public var login: @Sendable (String, String) async throws -> AuthServiceResponceDTO
-    
-    public init(
-        login: @Sendable @escaping (String, String) async throws -> AuthServiceResponceDTO
-    ) {
-        self.login = login
-    }
 }
 
 nonisolated

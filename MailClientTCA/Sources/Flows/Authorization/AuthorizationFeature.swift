@@ -5,13 +5,18 @@
 //  Created by yuchekan on 15.11.2025.
 //
 
-import SwiftUI
+import Foundation
 import ComposableArchitecture
 
 @Reducer
 public struct AuthorizationFeature: Sendable {
     public init() {}
-    @Dependency(\.authService) var authService
+    
+    @MainActor
+    @KeychainStorage("access_token")
+    private var accessToken
+    
+    @Dependency(\.authService) private var authService
     
     @ObservableState
     public struct State: Equatable, Sendable {
@@ -44,7 +49,10 @@ public struct AuthorizationFeature: Sendable {
                 state.isLoading = true
                 return .run { [state = state] send in
                     do {
-                        let _ = try await authService.login(state.username, state.password)
+                        let recponce = try await authService.login(state.username, state.password)
+                        Task { @MainActor in
+                            accessToken = recponce.message
+                        }
                         await send(.takeLogin)
                     } catch {
                         print("DEBUG: error")

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2DA249272EC8E810008740A6 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 2DA249262EC8E810008740A6 /* ComposableArchitecture */; };
+		2DA2498E2ECA116C008740A6 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = 2DA2498D2ECA116C008740A6 /* SocketIO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2DA249272EC8E810008740A6 /* ComposableArchitecture in Frameworks */,
+				2DA2498E2ECA116C008740A6 /* SocketIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = MailClientTCA;
 			packageProductDependencies = (
 				2DA249262EC8E810008740A6 /* ComposableArchitecture */,
+				2DA2498D2ECA116C008740A6 /* SocketIO */,
 			);
 			productName = MailClientTCA;
 			productReference = 2DA248932EC8C0A2008740A6 /* MailClientTCA.app */;
@@ -102,6 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2DA249252EC8E810008740A6 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+				2DA2498C2ECA116C008740A6 /* XCRemoteSwiftPackageReference "socket" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2DA248942EC8C0A2008740A6 /* Products */;
@@ -370,6 +374,14 @@
 				minimumVersion = 1.23.1;
 			};
 		};
+		2DA2498C2ECA116C008740A6 /* XCRemoteSwiftPackageReference "socket" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socketio/socket.io-client-swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -377,6 +389,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2DA249252EC8E810008740A6 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
 			productName = ComposableArchitecture;
+		};
+		2DA2498D2ECA116C008740A6 /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2DA2498C2ECA116C008740A6 /* XCRemoteSwiftPackageReference "socket" */;
+			productName = SocketIO;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
