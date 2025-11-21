@@ -15,3 +15,12 @@ public struct AuthServiceResponceDTO: Sendable, Decodable {
     let service: String
     let action: String
 }
+
+/*
+ {
+   "status": 0,
+   "message": "authenticate error",
+   "service": "account",
+   "action": "authorization"
+ }
+ */

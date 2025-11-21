@@ -43,7 +43,7 @@ struct ContentFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                print("DEBUG: \(accessToken)")
+                // accessToken = nil
                 if accessToken != nil {
                     state.route = .main
                 } else {

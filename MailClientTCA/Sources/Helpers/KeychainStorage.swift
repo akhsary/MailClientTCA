@@ -10,7 +10,7 @@ import Security
 import SwiftUI
 
 nonisolated
-fileprivate final class _KeychainStorage {
+final class _KeychainStorage: Sendable {
     enum KeychainError: Error {
         case itemAlreadyExist
         case itemNotFound
@@ -73,7 +73,7 @@ fileprivate final class _KeychainStorage {
 }
 
 nonisolated
-fileprivate extension _KeychainStorage {
+extension _KeychainStorage {
     func addPassword(_ password: String, for account: String) {
         var query: [CFString: Any] = [:]
         query[kSecClass] = kSecClassGenericPassword
@@ -141,16 +141,20 @@ fileprivate extension _KeychainStorage {
 }
 
 @propertyWrapper
-nonisolated public struct KeychainStorage: DynamicProperty {
-    private let label: String
-    private let storage = _KeychainStorage()
+nonisolated
+public struct KeychainStorage: DynamicProperty, Sendable {
+    nonisolated private let label: String
+    nonisolated private let storage = _KeychainStorage()
 
-    public init(_ label: String) {
+    nonisolated public init(_ label: String) {
         self.label = label
     }
 
-    public var wrappedValue: String? {
-        get { storage.getPassword(for: label) }
+    nonisolated public var wrappedValue: String? {
+        get {
+            storage.getPassword(for: label)
+        }
+        
         nonmutating set {
             if let newValue = newValue {
                 storage.updatePassword(newValue, for: label)

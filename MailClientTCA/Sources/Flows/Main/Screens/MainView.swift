@@ -11,13 +11,24 @@ import ComposableArchitecture
 struct MainView: View {
     let store: StoreOf<MainFeature>
     
+    @State private var service = MailSocketClient()
+    
     public init(store: StoreOf<MainFeature>) {
         self.store = store
     }
     
     var body: some View {
-        VStack {
-            Text("MainView")
+        List(store.items) { item in
+            LetterItemView(model: item)
+        }
+        .onAppear {
+            store.send(.startListening)
+        }
+        .onDisappear {
+            store.send(.stopListening)
+        }
+        .task {
+            await MailSocketClient.liveValue.connect()
         }
     }
 }

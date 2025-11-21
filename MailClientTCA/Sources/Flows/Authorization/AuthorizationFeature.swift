@@ -50,13 +50,14 @@ public struct AuthorizationFeature: Sendable {
                 state.isLoading = true
                 return .run { [state = state] send in
                     do {
-                        let recponce = try await authService.login(state.username, state.password)
+                        let responce = try await authService.login(username: state.username, password: state.password)
+                        print("DEBUG: \(responce)")
                         Task { @MainActor in
-                            accessToken = recponce.message
+                            accessToken = responce.data
                         }
                         await send(.takeLogin)
                     } catch {
-                        print("DEBUG: error")
+                        print("DEBUG: \(error)")
                     }
                 }
             case .takeLogin:

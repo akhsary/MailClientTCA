@@ -12,7 +12,7 @@ import DependenciesMacros
 @DependencyClient
 nonisolated
 public struct AuthService: Sendable {
-    public var login: @Sendable (String, String) async throws -> AuthServiceResponceDTO
+    public var login: @Sendable (_ username: String, _ password: String) async throws -> AuthServiceResponceDTO
 }
 
 nonisolated
