@@ -53,7 +53,8 @@ extension MailStorage: DependencyKey {
                     theme: "Test Theme",
                     date: Date(),
                     message: "Preview message",
-                    sendedTo: "preview@example.com"
+                    sendedTo: "preview@example.com",
+                    read: .random()
                 )
             ]
         },
@@ -64,7 +65,8 @@ extension MailStorage: DependencyKey {
                 theme: "Test Theme",
                 date: Date(),
                 message: "Preview message",
-                sendedTo: "preview@example.com"
+                sendedTo: "preview@example.com",
+                read: .random()
             )
         },
         delete: { _ in },

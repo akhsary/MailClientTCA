@@ -14,7 +14,7 @@ public struct MainFeature: Sendable {
     
     @Dependency(\.mailDataStorage) var mailDataStorage
     
-    private let socketClient = MailSocketClient.liveValue
+    @Dependency(\.mailSocketClient) var mailSocketClient
     
     @ObservableState
     public struct State: Equatable, Sendable {
@@ -34,6 +34,7 @@ public struct MainFeature: Sendable {
         case updating
         case updated
         case connectToSocket
+        case requestUpdate
         case takeNewLetters(LetterModels)
         case path(StackActionOf<Path>)
         case letterTapped(LetterItemModel)
@@ -57,16 +58,14 @@ public struct MainFeature: Sendable {
                 return .run { send in
                     await send(.updating)
                     
-                    // Загружаем существующие письма из базы
                     let storedLetters = (try? await mailDataStorage.fetch()) ?? []
                     await send(.takeNewLetters(storedLetters))
                     
-                    // Подключаемся к сокету с ID последнего письма
                     let lastLetterID = Int(storedLetters.first?.id ?? "0") ?? 0
-                    await socketClient.connect(with: lastLetterID)
+                    await mailSocketClient.connect(lastMailId: lastLetterID)
                     
                     // Обрабатываем события из сокета
-                    for await event in socketClient.events {
+                    for await event in mailSocketClient.events() {
                         switch event {
                         case .updating:
                             await send(.updating)
@@ -79,7 +78,8 @@ public struct MainFeature: Sendable {
                                     theme: mail.snippet,
                                     date: mail.updatedAt.toDate(),
                                     message: mail.message,
-                                    sendedTo: mail.to
+                                    sendedTo: mail.to,
+                                    read: mail.read
                                 )
                             }
                             
@@ -99,6 +99,11 @@ public struct MainFeature: Sendable {
                             continue
                         }
                     }
+                }
+                
+            case .requestUpdate:
+                return .run { _ in
+                    await mailSocketClient.requestUpdates()
                 }
                 
             case .takeNewLetters(let newLetters):
@@ -121,7 +126,7 @@ public struct MainFeature: Sendable {
                     theme: letter.theme,
                     date: letter.date?.toFormattedDateString()
                 )
-                state.path.append(.detail(MainDetailFeature.State(letterHeader: detail)))
+                state.path.append(.detail(MainDetailFeature.State(id: letter.id, letterHeader: detail)))
                 return .none
                 
             case .updated:

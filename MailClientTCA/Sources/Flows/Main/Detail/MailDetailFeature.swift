@@ -16,34 +16,26 @@ public struct MainDetailFeature: Sendable {
     
     @ObservableState
     public struct State: Equatable, Sendable {
+        let id: String
         let letterHeader: LetterDetailModel
-        var letterText: String = ""
+        var letterTextURLString: String = ""
     }
     
     public enum Action: Sendable {
         case onAppear
-        case takeLetterText(String)
+        case takeletterTextURLString(String)
     }
     
     public var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
                 case .onAppear:
-//                return .run { [id = state.id] send in
-//                    if let accessToken = await accessToken {
-//                        let responce = try await mainService.login(accessToken, id)
-//                        print("DEBUG: \n \(responce) \n ==========")
-//                        let letter = LetterDetailModel(name: responce.data.sender ?? "",
-//                                                       sendedTo: responce.data.to ?? "",
-//                                                       theme: responce.data.subject,
-//                                                       date: responce.data.updatedAt.toFormattedDateString(),
-//                                                       message: responce.data.message)
-//                        await send(.takeLetter(letter))
-//                    }
-//                }
-                return .none
-            case .takeLetterText(let letterText):
-                state.letterText = letterText
+                return .run { [id = state.id] send in
+                    let urlString = mainService.getLetterURL(mailID: id)
+                    await send(.takeletterTextURLString(urlString))
+                }
+            case .takeletterTextURLString(let letterTextURLString):
+                state.letterTextURLString = letterTextURLString
                 return .none
             }
         }

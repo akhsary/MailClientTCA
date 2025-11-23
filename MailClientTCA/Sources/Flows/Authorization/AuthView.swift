@@ -37,7 +37,7 @@ struct AuthView: View {
                     .padding(.horizontal, 50)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.black)
+                            .fill(.primary)
                     )
             }
             .disabled(store.isButtonDisabled)

@@ -16,6 +16,7 @@ public final class LetterItemDTO {
     public var date: Date?
     public var message: String?
     public var sendedTo: String?
+    public var read: Bool
     
     public init(
         id: String,
@@ -23,7 +24,8 @@ public final class LetterItemDTO {
         theme: String? = nil,
         date: Date? = nil,
         message: String? = nil,
-        sendedTo: String? = nil
+        sendedTo: String? = nil,
+        read: Bool
     ) {
         self.id = id
         self.name = name
@@ -31,6 +33,7 @@ public final class LetterItemDTO {
         self.date = date
         self.message = message
         self.sendedTo = sendedTo
+        self.read = read
     }
 }
 
@@ -43,7 +46,8 @@ extension LetterItemDTO {
             theme: theme,
             date: date,
             message: message,
-            sendedTo: sendedTo
+            sendedTo: sendedTo,
+            read: read
         )
     }
     
@@ -54,7 +58,8 @@ extension LetterItemDTO {
             theme: model.theme,
             date: model.date,
             message: model.message,
-            sendedTo: model.sendedTo
+            sendedTo: model.sendedTo,
+            read: model.read
         )
     }
 }

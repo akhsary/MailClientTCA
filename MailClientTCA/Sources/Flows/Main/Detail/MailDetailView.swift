@@ -6,54 +6,61 @@
 //
 
 import SwiftUI
+import WebKit
 import ComposableArchitecture
 
-struct MailDetailView: View, Equatable {
+struct MailDetailView: View {
     let store: StoreOf<MainDetailFeature>
     
     var body: some View {
-        ScrollView(.vertical) {
-                HStack(alignment: .top) {
-                    if let firstLetter = store.letterHeader.name.first {
-                        Text(String(firstLetter))
-                            .font(.subheadline)
-                            .padding(8)
-                            .background {
-                                Circle()
-                                    .fill(Color.cyan)
-                            }
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        HStack {
-                            Text(store.letterHeader.name)
-                                .font(.subheadline)
-                                .bold()
-                            
-                            Spacer()
-                            
-                            if let date = store.letterHeader.date {
-                                Text(date)
-                                    .font(.footnote)
-                            }
+        VStack(spacing: 0) {
+            HStack(alignment: .top) {
+                if let firstLetter = store.letterHeader.name.first {
+                    Text(String(firstLetter))
+                        .font(.subheadline)
+                        .padding(8)
+                        .background {
+                            Circle()
+                                .fill(Color.cyan)
                         }
+                }
+                
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text(store.letterHeader.name)
+                            .font(.subheadline)
+                            .bold()
                         
-                        if let theme = store.letterHeader.theme {
-                            Text(theme)
+                        Spacer()
+                        
+                        if let date = store.letterHeader.date {
+                            Text(date)
                                 .font(.footnote)
                         }
-                        
-                        Divider()
-                        
-                        Text(store.letterText)
-                            .font(.title)
-                            .foregroundStyle(Color.black)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    if let theme = store.letterHeader.theme {
+                        Text("Subject: \(Text(theme).bold())")
+                            .font(.footnote)
+                    }
+                    
+                    Text("To: \(Text(store.letterHeader.sendedTo).bold())")
+                    .font(.footnote)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 20)
+            
+            Divider()
+                .padding(.top, 12)
+            
+            WebView(
+                url: URL(string: store.letterTextURLString)
+            )
+            .padding(.horizontal, 5)
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .padding(.horizontal, 20)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .ignoresSafeArea(edges: .bottom)
         .onAppear {
             store.send(.onAppear)
         }
@@ -62,6 +69,7 @@ struct MailDetailView: View, Equatable {
 
 #Preview {
     MailDetailView(store: Store(initialState: MainDetailFeature.State(
+        id: "1",
         letterHeader: .init(name: "Yuriy Chekan",
                             sendedTo: "yrashka2004@xyecoc.com",
                             theme: "Letter theme",

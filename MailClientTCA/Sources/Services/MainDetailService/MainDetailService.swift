@@ -11,62 +11,17 @@ import DependenciesMacros
 
 @DependencyClient
 public struct MainService: Sendable {
-    public var getLetter: @Sendable (_ mailID: String) async throws -> MainServiceResponceDTO
+    public var getLetterURL: @Sendable (_ mailID: String) -> String = { _ in "" }
 }
 
 extension MainService: DependencyKey {
-    public static let liveValue = MainService { mailID in
-        let accessToken: String? = {
-            let storage = _KeychainStorage.shared
-            return storage.getPassword(for: "access_token")
-        }()
-        
-        let body = MainServiceRequestDTO(service: "mail",
-                                         params: ["mail_id": mailID, "param_1": mailID],
-                                         action: "view",
-                                         currentLang: "mail",
-                                         token: accessToken ?? "")
-        
-        let request = Request<MainServiceResponceDTO>.post(baseURL: "https://api.xyecoc.com",
-                                                           endpoint: "request",
-                                                           body: body)
-        let result = try await NetworkClient.liveValue.send(request)
-//        print("DEBUG: \(result)")
-        return result
+    public static let liveValue = MainService { id in
+        let token = _KeychainStorage.shared.getPassword(for: "access_token") ?? ""
+        return "https://cdn.xyecoc.com/mail/\(token)/\(id)?token=\(token)"
     }
     
     public static let previewValue = MainService { _ in
-        try await Task.sleep(nanoseconds: 1_000_000_000)
-//        print("DEBUG: preview auth")
-
-        return MainServiceResponceDTO(
-            status: 1,
-            message: "success",
-            data: .init(
-                id: 126492,
-                userId: 43187,
-                snippet: "Без темы",
-                sender: "Yuriy Chekan",
-                createdAt: "2025-11-19T16:25:59.086Z",
-                updatedAt: "2025-11-19T16:25:59.086Z",
-                read: false,
-                important: false,
-                cc: nil,
-                bcc: nil,
-                subject: "Без темы",
-                message: nil,
-                to: "yrashka2004@xyecoc.com",
-                messageId: "CAP-nxrtq2jyd=n8L1QEbs8X6yE8QeAMPgPTgVu86-KTn0cwCtg@mail.gmail.com",
-                fromEmail: "chekanyr@gmail.com",
-                fromName: "Yuriy Chekan",
-                violation: nil,
-                threadId: nil,
-                attachments: [nil]
-            ),
-            service: "mail",
-            action: "view",
-            security: "private"
-        )
+        return "https://cdn.xyecoc.com/mail/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMxODcsImVtYWlsIjoieXJhc2hrYTIwMDRAeHllY29jLmNvbSIsImZpcnN0X25hbWUiOiJ5cmFzaGthMjAwNCIsImxhc3RfbmFtZSI6IiIsImF2YXRhciI6bnVsbCwic3RvcmFnZV91c2VkIjo2OS40NTEwMDAwMDAwMDAwMSwic3RvcmFnZV90b3RhbCI6MTA1MDAwMCwiaWF0IjoxNzYzOTI1MTk0LCJleHAiOjE3OTU0NjExOTR9.CaC_ML_Rn9weMZFxfhii8OibkqQlNmVvDICKnFCQf1Q/129349?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMxODcsImVtYWlsIjoieXJhc2hrYTIwMDRAeHllY29jLmNvbSIsImZpcnN0X25hbWUiOiJ5cmFzaGthMjAwNCIsImxhc3RfbmFtZSI6IiIsImF2YXRhciI6bnVsbCwic3RvcmFnZV91c2VkIjo2OS40NTEwMDAwMDAwMDAwMSwic3RvcmFnZV90b3RhbCI6MTA1MDAwMCwiaWF0IjoxNzYzOTI1MTk0LCJleHAiOjE3OTU0NjExOTR9.CaC_ML_Rn9weMZFxfhii8OibkqQlNmVvDICKnFCQf1Q"
     }
 
 }

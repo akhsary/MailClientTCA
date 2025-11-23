@@ -58,8 +58,6 @@ public struct AuthorizationFeature: Sendable {
                         }.value
                         
                         await send(.loginSuccess)
-                        
-                        print("DEBUG: \(await accessToken)")
                     } catch let error as AuthError {
                         await send(.loginFailure(error))
                     } catch {
