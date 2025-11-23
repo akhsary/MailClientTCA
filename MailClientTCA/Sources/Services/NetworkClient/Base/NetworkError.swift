@@ -7,7 +7,6 @@
 
 import Foundation
 
-nonisolated
 public enum NetworkError: Error {
     case networkError(Error)
     case invalidResponse

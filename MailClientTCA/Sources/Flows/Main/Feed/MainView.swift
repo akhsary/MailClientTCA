@@ -25,6 +25,14 @@ struct MainView: View {
                         .foregroundStyle(Color.black)
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    ProfileMenuView(name: "yrashka2004") {
+                        store.send(.logout)
+                    }
+                }
+            }
+            .navigationTitle("Inbox")
             .onAppear {
                 store.send(.connectToSocket)
             }

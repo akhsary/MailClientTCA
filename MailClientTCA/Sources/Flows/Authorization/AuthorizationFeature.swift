@@ -29,7 +29,8 @@ public struct AuthorizationFeature: Sendable {
     public enum Action: Equatable, Sendable, BindableAction {
         case binding(BindingAction<State>)
         case login
-        case takeLogin
+        case loginSuccess
+        case loginFailure(AuthError)
     }
     
     public var body: some Reducer<State, Action> {
@@ -45,20 +46,29 @@ public struct AuthorizationFeature: Sendable {
                 return .none
             case .binding(_):
                 return .none
+                
             case .login:
                 state.isLoading = true
                 return .run { [state = state] send in
                     do {
-                        let responce = try await authService.login(username: state.username, password: state.password)
+                        let response = try await authService.login(username: state.username, password: state.password)
                         Task { @MainActor in
-                            accessToken = responce.data
+                            accessToken = response.data
                         }
-                        await send(.takeLogin)
+                        await send(.loginSuccess)
+                    } catch let error as AuthError {
+                        await send(.loginFailure(error))
                     } catch {
                         print("DEBUG: \(error)")
                     }
                 }
-            case .takeLogin:
+                
+            case .loginSuccess:
+                state.isLoading = false
+                return .none
+                
+            case .loginFailure:
+                state.isLoading = false
                 return .none
             }
         }

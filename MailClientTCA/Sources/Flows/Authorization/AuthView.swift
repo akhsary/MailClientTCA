@@ -23,7 +23,7 @@ struct AuthView: View {
             VStack(spacing: 20) {
                 XTextField(title: "Логин", text: $store.username)
                 
-                XTextField(title: "Пароль", text: $store.password)
+                XTextField(isSecure: true, title: "Пароль", text: $store.password)
             }
             .font(.footnote)
             .frame(maxHeight: .infinity, alignment: .center)

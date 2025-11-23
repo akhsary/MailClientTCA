@@ -12,7 +12,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2DA248932EC8C0A2008740A6 /* MailClientTCA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MailClientTCA.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2DA248932EC8C0A2008740A6 /* XMail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XMail.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,7 +47,7 @@
 		2DA248942EC8C0A2008740A6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2DA248932EC8C0A2008740A6 /* MailClientTCA.app */,
+				2DA248932EC8C0A2008740A6 /* XMail.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,9 +55,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		2DA248922EC8C0A2008740A6 /* MailClientTCA */ = {
+		2DA248922EC8C0A2008740A6 /* XMail */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2DA2489E2EC8C0A3008740A6 /* Build configuration list for PBXNativeTarget "MailClientTCA" */;
+			buildConfigurationList = 2DA2489E2EC8C0A3008740A6 /* Build configuration list for PBXNativeTarget "XMail" */;
 			buildPhases = (
 				2DA2488F2EC8C0A2008740A6 /* Sources */,
 				2DA248902EC8C0A2008740A6 /* Frameworks */,
@@ -70,13 +70,13 @@
 			fileSystemSynchronizedGroups = (
 				2DA248952EC8C0A2008740A6 /* MailClientTCA */,
 			);
-			name = MailClientTCA;
+			name = XMail;
 			packageProductDependencies = (
 				2DA249262EC8E810008740A6 /* ComposableArchitecture */,
 				2DA2498D2ECA116C008740A6 /* SocketIO */,
 			);
 			productName = MailClientTCA;
-			productReference = 2DA248932EC8C0A2008740A6 /* MailClientTCA.app */;
+			productReference = 2DA248932EC8C0A2008740A6 /* XMail.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -94,7 +94,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 2DA2488E2EC8C0A2008740A6 /* Build configuration list for PBXProject "MailClientTCA" */;
+			buildConfigurationList = 2DA2488E2EC8C0A2008740A6 /* Build configuration list for PBXProject "XMail" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -112,7 +112,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2DA248922EC8C0A2008740A6 /* MailClientTCA */,
+				2DA248922EC8C0A2008740A6 /* XMail */,
 			);
 		};
 /* End PBXProject section */
@@ -259,6 +259,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 99WYCXN243;
@@ -303,6 +304,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 99WYCXN243;
@@ -345,7 +347,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2DA2488E2EC8C0A2008740A6 /* Build configuration list for PBXProject "MailClientTCA" */ = {
+		2DA2488E2EC8C0A2008740A6 /* Build configuration list for PBXProject "XMail" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2DA2489C2EC8C0A3008740A6 /* Debug */,
@@ -354,7 +356,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		2DA2489E2EC8C0A3008740A6 /* Build configuration list for PBXNativeTarget "MailClientTCA" */ = {
+		2DA2489E2EC8C0A3008740A6 /* Build configuration list for PBXNativeTarget "XMail" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2DA2489F2EC8C0A3008740A6 /* Debug */,

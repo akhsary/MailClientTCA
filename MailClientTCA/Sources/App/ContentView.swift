@@ -10,19 +10,23 @@ import ComposableArchitecture
 
 @Reducer
 struct ContentFeature {
-    private let accessToken: String? = {
-        let storage = _KeychainStorage.shared
-        return storage.getPassword(for: "access_token")
-    }()
+    private var accessToken: String? {
+        get {
+            return _KeychainStorage.shared.getPassword(for: "access_token")
+        }
+        
+        nonmutating set {
+            _KeychainStorage.shared.updatePassword(newValue ?? "", for: "acess_token")
+        }
+    }
     
     @ObservableState
     struct State: Equatable, Sendable {
-        // Что сейчас показываем — auth или main
         var route: Route = .auth
         
-        // Презентации
         @Presents var auth: AuthorizationFeature.State?
         @Presents var main: MainFeature.State?
+        @Presents var alert: AlertState<Action.Alert>?
     }
     
     enum Route: Equatable {
@@ -32,44 +36,67 @@ struct ContentFeature {
     
     enum Action: Sendable {
         case onAppear
-        
         case setRoute(Route)
         
-        // Презентуемые фичи
         case auth(PresentationAction<AuthorizationFeature.Action>)
         case main(PresentationAction<MainFeature.Action>)
+        case alert(PresentationAction<Alert>)
+        
+        public enum Alert: Equatable, Sendable {
+            case dismiss
+        }
     }
     
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                // accessToken = nil
                 if accessToken != nil {
                     state.route = .main
+                    state.main = MainFeature.State()
                 } else {
                     state.route = .auth
-                }
-                switch state.route {
-                case .auth:
                     state.auth = AuthorizationFeature.State()
-                case .main:
-                    state.main = MainFeature.State()
                 }
                 return .none
-            case .setRoute(_):
+                
+            case .setRoute(let route):
+                state.route = route
                 return .none
-            case let .auth(.presented(action)):
-                if action == .takeLogin {
-                    state.auth = nil
-                    state.route = .main
-                    state.main = .init()
+                
+            // Перехватываем ошибки из AuthorizationFeature
+            case .auth(.presented(.loginFailure(let error))):
+                state.alert = AlertState {
+                    TextState(error.title)
+                } actions: {
+                    ButtonState(action: .dismiss) {
+                        TextState("OK")
+                    }
+                } message: {
+                    TextState(error.message)
                 }
                 return .none
-            case let .main(.presented(action)):
-                print(action)
+                
+            case .auth(.presented(.loginSuccess)):
+                state.auth = nil
+                state.route = .main
+                state.main = MainFeature.State()
                 return .none
-            case .auth, .main:
+                
+            case .auth:
+                return .none
+                
+            case .main(.presented(.logout)):
+                state.route = .auth
+                state.auth = AuthorizationFeature.State()
+                state.main = nil
+                accessToken = nil
+                return .none
+                
+            case .main:
+                return .none
+                
+            case .alert:
                 return .none
             }
         }
@@ -79,8 +106,10 @@ struct ContentFeature {
         .ifLet(\.$main, action: \.main) {
             MainFeature()
         }
+        .ifLet(\.$alert, action: \.alert)
     }
 }
+
 
 struct ContentView: View {
     @Bindable private var store: StoreOf<ContentFeature>
@@ -104,11 +133,7 @@ struct ContentView: View {
             ) { mainStore in
                 MainView(store: mainStore)
             }
+            .alert(store: store.scope(state: \.$alert, action: \.alert))
     }
 }
 
-#Preview {
-    ContentView(store: Store(initialState: ContentFeature.State()) {
-        ContentFeature()
-    })
-}

@@ -26,6 +26,7 @@ public struct MainFeature: Sendable {
         case takeNewLetters([LetterItemModel])
         case path(StackActionOf<Path>)
         case letterTapped(LetterItemModel)
+        case logout
     }
     
     @Reducer
@@ -66,6 +67,9 @@ public struct MainFeature: Sendable {
                 return .none
                 
             case .path(_):
+                return .none
+                
+            case .logout:
                 return .none
             }
         }

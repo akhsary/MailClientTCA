@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct AuthError: Sendable, Identifiable, Error {
+public struct AuthError: Sendable, Identifiable, Equatable, Error {
     let title: String
     let message: String
     
-    var id: String {
+    public var id: String {
         title + message
     }
 }
