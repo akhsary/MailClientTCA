@@ -53,7 +53,7 @@ struct MailDetailView: View, Equatable {
                 }
         }
         .scrollBounceBehavior(.basedOnSize)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 20)
         .onAppear {
             store.send(.onAppear)
         }

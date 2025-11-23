@@ -16,9 +16,11 @@ struct ContentFeature {
         }
         
         nonmutating set {
-            _KeychainStorage.shared.updatePassword(newValue ?? "", for: "acess_token")
+            _KeychainStorage.shared.updatePassword(newValue ?? "", for: "access_token")
         }
     }
+    
+    @Dependency(\.mailDataStorage) var mailDataStorage
     
     @ObservableState
     struct State: Equatable, Sendable {
@@ -51,7 +53,8 @@ struct ContentFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                if accessToken != nil {
+                if let accessToken,
+                   !accessToken.isEmpty {
                     state.route = .main
                     state.main = MainFeature.State()
                 } else {
@@ -64,7 +67,7 @@ struct ContentFeature {
                 state.route = route
                 return .none
                 
-            // Перехватываем ошибки из AuthorizationFeature
+                // Перехватываем ошибки из AuthorizationFeature
             case .auth(.presented(.loginFailure(let error))):
                 state.alert = AlertState {
                     TextState(error.title)
@@ -87,11 +90,14 @@ struct ContentFeature {
                 return .none
                 
             case .main(.presented(.logout)):
+                accessToken = nil
                 state.route = .auth
                 state.auth = AuthorizationFeature.State()
                 state.main = nil
-                accessToken = nil
-                return .none
+                return .run { _ in
+                    async let _ = MailSocketClient.liveValue.disconnect()
+                    async let _ = mailDataStorage.deleteAll()
+                }
                 
             case .main:
                 return .none

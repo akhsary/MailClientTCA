@@ -7,12 +7,24 @@
 
 import Foundation
 
-nonisolated extension String {
-    func toFormattedDateString() -> String? {
+extension String {
+    /// Преобразует ISO8601 строку в Date
+    func toDate() -> Date? {
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
-        guard let date = isoFormatter.date(from: self) else {
+        if let date = isoFormatter.date(from: self) {
+            return date
+        }
+        
+        // Фолбэк: пробуем без fractional seconds
+        isoFormatter.formatOptions = [.withInternetDateTime]
+        return isoFormatter.date(from: self)
+    }
+    
+    /// Преобразует ISO8601 строку в отформатированную строку для UI
+    func toFormattedDateString() -> String? {
+        guard let date = self.toDate() else {
             return nil
         }
         

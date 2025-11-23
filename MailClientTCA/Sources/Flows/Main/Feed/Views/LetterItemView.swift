@@ -31,7 +31,7 @@ struct LetterItemView: View, Equatable {
                     Spacer()
                     
                     if let date = model.date {
-                        Text(date)
+                        Text(date.toFormattedDateString())
                             .font(.footnote)
                     }
                 }
@@ -52,6 +52,6 @@ struct LetterItemView: View, Equatable {
 }
 
 #Preview {
-    LetterItemView(model: .init(id: "1", name: "Yuriy Chekan", theme: "Letter theme", date: "17:56", message: "Message text placeholder at least 2 lines long to test line limit feature and make sure it works properly :) and also to test how line linit works", sendedTo: nil))
+    LetterItemView(model: .init(id: "1", name: "Yuriy Chekan", theme: "Letter theme", date: Date(), message: "Message text placeholder at least 2 lines long to test line limit feature and make sure it works properly :) and also to test how line linit works", sendedTo: nil))
         .padding()
 }

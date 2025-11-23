@@ -33,8 +33,9 @@ struct MainView: View {
                 }
             }
             .navigationTitle("Inbox")
+            .navigationSubtitle(store.state.isLoading ? "Загружаем письма..." : "")
             .onAppear {
-                store.send(.connectToSocket)
+                store.send(.onAppear)
             }
         } destination: { store in
             switch store.case {

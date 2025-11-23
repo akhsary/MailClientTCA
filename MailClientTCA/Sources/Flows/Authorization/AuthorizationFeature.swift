@@ -52,10 +52,14 @@ public struct AuthorizationFeature: Sendable {
                 return .run { [state = state] send in
                     do {
                         let response = try await authService.login(username: state.username, password: state.password)
-                        Task { @MainActor in
+                        
+                        await Task { @MainActor in
                             accessToken = response.data
-                        }
+                        }.value
+                        
                         await send(.loginSuccess)
+                        
+                        print("DEBUG: \(await accessToken)")
                     } catch let error as AuthError {
                         await send(.loginFailure(error))
                     } catch {

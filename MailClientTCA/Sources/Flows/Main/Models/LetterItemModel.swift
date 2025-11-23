@@ -7,6 +7,8 @@
 
 import Foundation
 
+public typealias LetterModels = [LetterItemModel]
+
 public struct LetterItemModel: Equatable, Identifiable, Sendable {
     public static func == (lhs: LetterItemModel, rhs: LetterItemModel) -> Bool {
         lhs.id == rhs.id
@@ -19,7 +21,7 @@ public struct LetterItemModel: Equatable, Identifiable, Sendable {
     public let id: String
     public let name: String
     public let theme: String?
-    public let date: String?
+    public let date: Date?
     public let message: String?
     public let sendedTo: String?
 }

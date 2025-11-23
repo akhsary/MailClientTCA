@@ -24,9 +24,12 @@ extension AuthService: DependencyKey {
         let request = Request<AuthServiceResponceDTO>.post(baseURL: "https://api.xyecoc.com",
                                                            endpoint: "request",
                                                            body: body)
-        let result = try await NetworkClient.liveValue.send(request)
-//        print("DEBUG: \(result)")
-        return result
+        do {
+            let result = try await NetworkClient.liveValue.send(request)
+            return result
+        } catch {
+            throw AuthError(title: "Что-то пошл не так!", message: "Попробуйте позже.")
+        }
     }
     
     public static let previewValue = AuthService { username, password in

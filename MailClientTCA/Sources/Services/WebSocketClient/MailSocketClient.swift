@@ -9,11 +9,10 @@ import Foundation
 
 actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     private let accessToken: String?
+    private let baseURL: URL = URL(string: "https://api.xyecoc.com")!
     
     private var task: URLSessionWebSocketTask?
     private var session: URLSession?
-    
-    private var baseURL: URL = URL(string: "https://api.xyecoc.com")!
     
     private var sessionId: String?
     private var pingInterval: TimeInterval = 25
@@ -33,6 +32,8 @@ actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     // MARK: - Event Types
     
     public enum SocketEvent: @unchecked Sendable {
+        case updating
+        case updated
         case connected
         case disconnected
         case newMails([MailData])
@@ -64,7 +65,16 @@ actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     
     // MARK: - Public Methods
     
-    func connect() async {
+    func connect(with id: Int?) async {
+        defer {
+            eventContinuation?.yield(.updated)
+        }
+        
+        if let id {
+            self.lastMailId = id
+        }
+        
+        eventContinuation?.yield(.updating)
         do {
             try await performHandshake()
             try await sendConnectPacket()
@@ -78,6 +88,7 @@ actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     func disconnect() {
+        lastMailId = 0
         cleanup()
         eventContinuation?.yield(.disconnected)
     }
@@ -112,6 +123,7 @@ actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
         
         emit(event: "request", data: requestData)
         logConnection("📤 Requesting new mails with last_mail_id: \(self.lastMailId)")
+        eventContinuation?.yield(.updated)
     }
     
     // MARK: - Private Methods: Cleanup
@@ -213,7 +225,7 @@ actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     
     private func listen() {
         task?.receive { [weak self] result in
-            guard let self else { return }
+            guard let self, !Task.isCancelled else { return }
             
             Task {
                 switch result {
@@ -318,6 +330,8 @@ actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
             logConnection("⏭️ Nothing changed, skipping request")
             // НЕ запрашиваем снова - просто выходим
             return
+        } else {
+            eventContinuation?.yield(.updating)
         }
         
         // Если есть изменения, обрабатываем почту
