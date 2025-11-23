@@ -66,7 +66,9 @@ extension MailSocketClient: DependencyKey {
             events: {
                 actor.events
             },
-            requestUpdates: {}
+            requestUpdates: {
+                await actor.requestNewMails()
+            }
         )
     }()
     

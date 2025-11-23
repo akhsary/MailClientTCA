@@ -246,6 +246,7 @@ actor _MailSocketActor: NSObject, URLSessionWebSocketDelegate {
         
         if text == "2" {
             send(text: "3")
+            requestNewMails()
             return
         }
         
@@ -309,7 +310,6 @@ actor _MailSocketActor: NSObject, URLSessionWebSocketDelegate {
         
         guard let mailsArray = data["mails"] as? [[String: Any]] else {
             logConnection("❌ No mails array in response")
-            requestNewMails()
             return
         }
         
