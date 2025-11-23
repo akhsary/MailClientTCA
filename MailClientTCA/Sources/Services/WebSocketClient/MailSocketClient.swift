@@ -7,11 +7,8 @@
 
 import Foundation
 
-final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
-    private let accessToken: String? = {
-        let storage = _KeychainStorage()
-        return storage.getPassword(for: "access_token")
-    }()
+actor MailSocketClient: NSObject, URLSessionWebSocketDelegate {
+    private let accessToken: String?
     
     private var task: URLSessionWebSocketTask?
     private var session: URLSession?
@@ -19,55 +16,79 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     private var baseURL: URL = URL(string: "https://api.xyecoc.com")!
     
     private var sessionId: String?
-    private var pingTimer: Timer?
-    private var pollTimer: Timer?
     private var pingInterval: TimeInterval = 25
     private var pingTimeout: TimeInterval = 20
     private var maxPayload: Int = 1000000
     
     private var lastMailId: Int = 0
     
-    var onEvent: ((String, Any?) -> Void)?
-    var onDisconnect: (() -> Void)?
     var enableDebugLogging: Bool = true
+    
+    // MARK: - AsyncStream
+    
+    private var eventContinuation: AsyncStream<SocketEvent>.Continuation?
+    
+    public let events: AsyncStream<SocketEvent>
+    
+    // MARK: - Event Types
+    
+    public enum SocketEvent: @unchecked Sendable {
+        case connected
+        case disconnected
+        case newMails([MailData])
+        case error(String)
+        case rawEvent(name: String, payload: [String: Any])
+    }
+    
+    // MARK: - Initialization
+    
+    override init() {
+        let storage = _KeychainStorage.shared
+        self.accessToken = storage.getPassword(for: "access_token")
+        
+        var continuation: AsyncStream<SocketEvent>.Continuation?
+        let stream = AsyncStream<SocketEvent> { continuation = $0 }
+        self.events = stream
+        self.eventContinuation = continuation
+        
+        super.init()
+    }
+    
+    deinit {
+        eventContinuation?.finish()
+        Task { [task, session] in
+            task?.cancel(with: .goingAway, reason: nil)
+            session?.invalidateAndCancel()
+        }
+    }
     
     // MARK: - Public Methods
     
-    @MainActor
     func connect() async {
         do {
-            // Шаг 1: HTTP handshake для получения session ID
             try await performHandshake()
-            
-            // Шаг 2: Отправить CONNECT пакет через polling
             try await sendConnectPacket()
-            
-            // Шаг 3: Апгрейд до WebSocket
             try await upgradeToWebSocket()
             
         } catch {
-            print("❌ Connection error:", error)
-            onDisconnect?()
+            logConnection("❌ Connection error: \(error)")
+            eventContinuation?.yield(.error(error.localizedDescription))
+            eventContinuation?.yield(.disconnected)
         }
     }
     
     func disconnect() {
-        pingTimer?.invalidate()
-        pollTimer?.invalidate()
-        task?.cancel(with: .goingAway, reason: nil)
-        session?.invalidateAndCancel()
-        sessionId = nil
-        onDisconnect?()
+        cleanup()
+        eventContinuation?.yield(.disconnected)
     }
     
     func emit(event: String, data: Any) {
-        // Формат Socket.IO: 42["eventName", {...}]
         let payload: String
         if let jsonData = try? JSONSerialization.data(withJSONObject: [event, data]),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             payload = "42\(jsonString)"
         } else {
-            print("❌ Failed to serialize event data")
+            logConnection("❌ Failed to serialize event data")
             return
         }
         send(text: payload)
@@ -84,29 +105,25 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
             "service": "mail",
             "params": [:] as [String: Any],
             "action": "default",
+            "last_mail_id": self.lastMailId,
             "currentLang": "inbox",
             "token": token
         ]
         
         emit(event: "request", data: requestData)
-        logConnection("📤 Requesting new mails...")
+        logConnection("📤 Requesting new mails with last_mail_id: \(self.lastMailId)")
     }
     
-    func startMailPolling(interval: TimeInterval = 5.0) {
-        pollTimer?.invalidate()
-        pollTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.requestNewMails()
-        }
-    }
+    // MARK: - Private Methods: Cleanup
     
-    func stopMailPolling() {
-        pollTimer?.invalidate()
-        pollTimer = nil
+    private func cleanup() {
+        task?.cancel(with: .goingAway, reason: nil)
+        session?.invalidateAndCancel()
+        sessionId = nil
     }
     
     // MARK: - Private Methods: Connection Flow
     
-    @MainActor
     private func performHandshake() async throws {
         guard let token = accessToken else {
             throw NSError(domain: "MailSocketClient", code: 1, userInfo: [NSLocalizedDescriptionKey: "No access token"])
@@ -142,7 +159,6 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
         }
     }
     
-    @MainActor
     private func sendConnectPacket() async throws {
         guard let sessionId = sessionId, let token = accessToken else { return }
         
@@ -169,7 +185,6 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
         }
     }
     
-    @MainActor
     private func upgradeToWebSocket() async throws {
         guard let sessionId = sessionId, let token = accessToken else { return }
         
@@ -199,77 +214,78 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     private func listen() {
         task?.receive { [weak self] result in
             guard let self else { return }
-            switch result {
-            case .success(let msg):
-                switch msg {
-                case .string(let str):
-                    self.logMessage("RECV", str)
-                    self.handleMessage(str)
-                    
-                case .data(let data):
-                    self.logMessage("RECV", "Binary data: \(data.count) bytes")
-                    if let stringRepresentation = String(data: data, encoding: .utf8) {
-                        self.logMessage("RECV", "Data as String: \(stringRepresentation)")
+            
+            Task {
+                switch result {
+                case .success(let msg):
+                    switch msg {
+                    case .string(let str):
+                        await self.logMessage("RECV", str)
+                        await self.handleMessage(str)
+                        
+                    case .data(let data):
+                        await self.logMessage("RECV", "Binary data: \(data.count) bytes")
+                        if let stringRepresentation = String(data: data, encoding: .utf8) {
+                            await self.logMessage("RECV", "Data as String: \(stringRepresentation)")
+                        }
+                        
+                    @unknown default:
+                        break
                     }
                     
-                @unknown default:
-                    break
+                case .failure(let error):
+                    await self.logConnection("❌ WebSocket error: \(error.localizedDescription)")
+                    await self.handleError(error)
                 }
-            case .failure(let error):
-                self.logConnection("❌ WebSocket error: \(error.localizedDescription)")
-                Task { @MainActor in
-                    self.disconnect()
-                }
+                
+                await self.listen()
             }
-            self.listen()
         }
     }
     
+    private func handleError(_ error: Error) {
+        eventContinuation?.yield(.error(error.localizedDescription))
+        disconnect()
+    }
+    
     private func handleMessage(_ text: String) {
-        // Engine.IO probe ответ
         if text == "3probe" {
             logConnection("✅ Probe confirmed, sending upgrade packet")
             send(text: "5")
             return
         }
         
-        // Engine.IO ping
         if text == "2" {
             send(text: "3")
             return
         }
         
-        // Socket.IO CONNECT response: 40{"sid":"..."}
         if text.hasPrefix("40") {
             logConnection("✅ Socket.IO connected")
             if text.count > 2 {
                 let json = String(text.dropFirst(2))
-                print("Connection data:", json)
+                logConnection("Connection data: \(json)")
             }
-            startPing()
             
-            // Сразу запрашиваем почту
+            eventContinuation?.yield(.connected)
+            
+            // Только один начальный запрос при подключении
             requestNewMails()
-            
-            // Запускаем периодический опрос
-            startMailPolling()
             return
         }
         
-        // Socket.IO EVENT: 42[...]
         if text.hasPrefix("42") {
             let json = String(text.dropFirst(2))
             handleSocketEvent(json)
         }
         
-        // Socket.IO ACK: 43[...]
         if text.hasPrefix("43") {
             logConnection("Received ACK")
         }
         
-        // Socket.IO ERROR: 44{...}
         if text.hasPrefix("44") {
             logConnection("❌ Socket.IO error: \(text)")
+            eventContinuation?.yield(.error(text))
         }
     }
     
@@ -281,7 +297,7 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
             let event = arr[0] as? String,
             let payload = arr[1] as? [String: Any]
         else {
-            print("Failed to parse event:", json)
+            logConnection("Failed to parse event: \(json)")
             return
         }
         
@@ -290,31 +306,48 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
         if event == "response" {
             handleMailResponse(payload)
         } else {
-            onEvent?(event, payload)
+            eventContinuation?.yield(.rawEvent(name: event, payload: payload))
         }
     }
     
     private func handleMailResponse(_ data: [String: Any]) {
-        print("📬 Mail response:", data)
+        logConnection("📬 Mail response received")
         
-        if let nothingChanged = data["nothing_changed"] as? Bool {
-            if nothingChanged {
-                print("📭 No new mails")
-            } else {
-                print("📬 New mails available!")
-                
-                // Если есть массив писем (проверьте ключ на сервере)
-                if let mails = data["mails"] as? [[String: Any]] {
-                    print("New mails count:", mails.count)
-                    
-                    // Обновляем last_mail_id
-                    if let maxId = mails.compactMap({ $0["id"] as? Int }).max() {
-                        lastMailId = maxId
-                    }
-                }
-                
-                onEvent?("newMails", data)
+        // Проверяем флаг nothing_changed
+        if let nothingChanged = data["nothing_changed"] as? Bool, nothingChanged {
+            logConnection("⏭️ Nothing changed, skipping request")
+            // НЕ запрашиваем снова - просто выходим
+            return
+        }
+        
+        // Если есть изменения, обрабатываем почту
+        guard let mailsArray = data["mails"] as? [[String: Any]] else {
+            logConnection("❌ No mails array in response")
+            // Запрашиваем снова даже при ошибке парсинга
+            requestNewMails()
+            return
+        }
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: mailsArray)
+            let mails = try JSONDecoder().decode([MailData].self, from: jsonData)
+            
+            logConnection("📬 Parsed \(mails.count) mails")
+            
+            if let lastId = data["last_mail_id"] as? Int {
+                lastMailId = lastId
             }
+            
+            eventContinuation?.yield(.newMails(mails))
+            
+            // После успешной обработки запрашиваем следующую порцию
+            requestNewMails()
+            
+        } catch {
+            logConnection("❌ Failed to decode mails: \(error)")
+            eventContinuation?.yield(.error("Failed to decode mails: \(error.localizedDescription)"))
+            // При ошибке декодирования тоже запрашиваем снова
+            requestNewMails()
         }
     }
     
@@ -323,18 +356,12 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
         
         task?.send(.string(text)) { [weak self] error in
             if let error {
-                self?.logConnection("❌ Send error: \(error.localizedDescription)")
+                Task {
+                    await self?.logConnection("❌ Send error: \(error.localizedDescription)")
+                    await self?.eventContinuation?.yield(.error(error.localizedDescription))
+                }
             }
         }
-    }
-    
-    // MARK: - Private Methods: Heartbeat
-    
-    private func startPing() {
-        pingTimer?.invalidate()
-//        pingTimer = Timer.scheduledTimer(withTimeInterval: pingInterval, repeats: true) { [weak self] _ in
-//            // В Engine.IO v4 пинги отправляет сервер, клиент только отвечает
-//        }
     }
     
     // MARK: - Logging
@@ -374,16 +401,32 @@ final class MailSocketClient: NSObject, URLSessionWebSocketDelegate {
     
     // MARK: - URLSessionWebSocketDelegate
     
-    func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol _protocol: String?) {
-        logConnection("✅ WebSocket opened with protocol: \(_protocol ?? "none")")
+    nonisolated func urlSession(
+        _ session: URLSession,
+        webSocketTask: URLSessionWebSocketTask,
+        didOpenWithProtocol protocolName: String?
+    ) {
+        Task {
+            await logConnection("✅ WebSocket opened with protocol: \(protocolName ?? "none")")
+        }
     }
     
-    func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+    nonisolated func urlSession(
+        _ session: URLSession,
+        webSocketTask: URLSessionWebSocketTask,
+        didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
+        reason: Data?
+    ) {
         let reasonString = reason.flatMap { String(data: $0, encoding: .utf8) } ?? "No reason"
-        logConnection("❌ WebSocket closed - Code: \(closeCode.rawValue), Reason: \(reasonString)")
-        Task { @MainActor in
-            disconnect()
+        Task {
+            await logConnection("❌ WebSocket closed - Code: \(closeCode.rawValue), Reason: \(reasonString)")
+            await handleDisconnection()
         }
+    }
+    
+    private func handleDisconnection() {
+        eventContinuation?.yield(.disconnected)
+        disconnect()
     }
 }
 

@@ -26,7 +26,7 @@ public struct AuthorizationFeature: Sendable {
         var isButtonDisabled: Bool = true
     }
     
-    public enum Action: Equatable, BindableAction {
+    public enum Action: Equatable, Sendable, BindableAction {
         case binding(BindingAction<State>)
         case login
         case takeLogin
@@ -46,12 +46,10 @@ public struct AuthorizationFeature: Sendable {
             case .binding(_):
                 return .none
             case .login:
-                print("DEBUG: login")
                 state.isLoading = true
                 return .run { [state = state] send in
                     do {
                         let responce = try await authService.login(username: state.username, password: state.password)
-                        print("DEBUG: \(responce)")
                         Task { @MainActor in
                             accessToken = responce.data
                         }

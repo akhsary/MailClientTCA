@@ -10,31 +10,34 @@ import Dependencies
 import DependenciesMacros
 
 @DependencyClient
-nonisolated
 public struct MainService: Sendable {
-    public var login: @Sendable (String, String) async throws -> MainServiceResponceDTO
+    public var getLetter: @Sendable (_ mailID: String) async throws -> MainServiceResponceDTO
 }
 
-nonisolated
 extension MainService: DependencyKey {
-    public static let liveValue = MainService { token, mailID in
+    public static let liveValue = MainService { mailID in
+        let accessToken: String? = {
+            let storage = _KeychainStorage.shared
+            return storage.getPassword(for: "access_token")
+        }()
+        
         let body = MainServiceRequestDTO(service: "mail",
                                          params: ["mail_id": mailID, "param_1": mailID],
                                          action: "view",
                                          currentLang: "mail",
-                                         token: token)
+                                         token: accessToken ?? "")
         
-        let request = await Request<MainServiceResponceDTO>.post(baseURL: "https://api.xyecoc.com",
+        let request = Request<MainServiceResponceDTO>.post(baseURL: "https://api.xyecoc.com",
                                                            endpoint: "request",
                                                            body: body)
         let result = try await NetworkClient.liveValue.send(request)
-        print("DEBUG: \(result)")
+//        print("DEBUG: \(result)")
         return result
     }
     
-    public static let previewValue = MainService { username, password in
+    public static let previewValue = MainService { _ in
         try await Task.sleep(nanoseconds: 1_000_000_000)
-        print("DEBUG: preview auth")
+//        print("DEBUG: preview auth")
 
         return MainServiceResponceDTO(
             status: 1,
@@ -69,7 +72,7 @@ extension MainService: DependencyKey {
 }
 
 extension DependencyValues {
-    nonisolated public var mainService: MainService {
+    public var mainService: MainService {
         get { self[MainService.self] }
         set { self[MainService.self] = newValue }
     }

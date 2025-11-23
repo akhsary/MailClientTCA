@@ -10,12 +10,10 @@ import Dependencies
 import DependenciesMacros
 
 @DependencyClient
-nonisolated
 public struct AuthService: Sendable {
     public var login: @Sendable (_ username: String, _ password: String) async throws -> AuthServiceResponceDTO
 }
 
-nonisolated
 extension AuthService: DependencyKey {
     public static let liveValue = AuthService { username, password in
         let body = AuthServiceRequestDTO(service: "account",
@@ -23,17 +21,17 @@ extension AuthService: DependencyKey {
                                          data: .init(email: username,
                                                      password: password))
         
-        let request = await Request<AuthServiceResponceDTO>.post(baseURL: "https://api.xyecoc.com",
+        let request = Request<AuthServiceResponceDTO>.post(baseURL: "https://api.xyecoc.com",
                                                            endpoint: "request",
                                                            body: body)
         let result = try await NetworkClient.liveValue.send(request)
-        print("DEBUG: \(result)")
+//        print("DEBUG: \(result)")
         return result
     }
     
     public static let previewValue = AuthService { username, password in
         try await Task.sleep(nanoseconds: 1_000_000_000)
-        print("DEBUG: preview auth")
+//        print("DEBUG: preview auth")
         return AuthServiceResponceDTO(status: 1, data: "", message: "", service: "", action: "")
     }
 }

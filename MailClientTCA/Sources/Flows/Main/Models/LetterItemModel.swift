@@ -7,11 +7,19 @@
 
 import Foundation
 
-nonisolated
-public struct LetterItemModel: Equatable, Identifiable {
+public struct LetterItemModel: Equatable, Identifiable, Sendable {
+    public static func == (lhs: LetterItemModel, rhs: LetterItemModel) -> Bool {
+        lhs.id == rhs.id
+        && lhs.name == rhs.name
+        && lhs.theme == rhs.theme
+        && lhs.date == rhs.date
+        && lhs.message == rhs.message
+    }
+    
     public let id: String
     public let name: String
     public let theme: String?
     public let date: String?
     public let message: String?
+    public let sendedTo: String?
 }

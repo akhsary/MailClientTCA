@@ -11,6 +11,10 @@ import SwiftUI
 
 nonisolated
 final class _KeychainStorage: Sendable {
+    static let shared = _KeychainStorage()
+    
+    private init() {}
+    
     enum KeychainError: Error {
         case itemAlreadyExist
         case itemNotFound
@@ -144,7 +148,7 @@ extension _KeychainStorage {
 nonisolated
 public struct KeychainStorage: DynamicProperty, Sendable {
     nonisolated private let label: String
-    nonisolated private let storage = _KeychainStorage()
+    nonisolated private let storage = _KeychainStorage.shared
 
     nonisolated public init(_ label: String) {
         self.label = label

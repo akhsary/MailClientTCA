@@ -10,9 +10,10 @@ import ComposableArchitecture
 
 @Reducer
 struct ContentFeature {
-    @MainActor
-    @KeychainStorage("access_token")
-    var accessToken
+    private let accessToken: String? = {
+        let storage = _KeychainStorage.shared
+        return storage.getPassword(for: "access_token")
+    }()
     
     @ObservableState
     struct State: Equatable, Sendable {

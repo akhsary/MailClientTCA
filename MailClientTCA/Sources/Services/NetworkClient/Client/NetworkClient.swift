@@ -114,7 +114,7 @@ public actor NetworkClient {
             }.value
         } catch {
             #if DEBUG
-            print("DEBUG: \(error)")
+//            print("DEBUG: \(error)")
             #endif
             throw NetworkError.decodingError
         }

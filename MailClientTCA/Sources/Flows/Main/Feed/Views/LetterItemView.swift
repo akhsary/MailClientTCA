@@ -52,6 +52,6 @@ struct LetterItemView: View, Equatable {
 }
 
 #Preview {
-    LetterItemView(model: .init(id: "1", name: "Yuriy Chekan", theme: "Letter theme", date: "17:56", message: "Message text placeholder at least 2 lines long to test line limit feature and make sure it works properly :) and also to test how line linit works"))
+    LetterItemView(model: .init(id: "1", name: "Yuriy Chekan", theme: "Letter theme", date: "17:56", message: "Message text placeholder at least 2 lines long to test line limit feature and make sure it works properly :) and also to test how line linit works", sendedTo: nil))
         .padding()
 }
